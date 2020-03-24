@@ -13,25 +13,41 @@ def main():
     print("Once renaming is complete, it will remove any sample files and jpegs.")
     print("Specific results of work completed will output to ./fileCleanerResults.json\n")
 
-    rundir = str(input("What directory should this run against?: "))
+    rundir= input("What directory should this run against?(input w/ quotes): ")
 
     # Clean file and directory names, removing things like spaces a nd special characters
-    def clean(rundir):
+    def clean(dir):
         # os.rename(src, dst)
-        def cleandirs(rundir):
+        def cleandirs(dir):
             pass
-        def cleanfiles(rundir):
-            pass
+        def cleanfiles(dir):
+            removedfiles = []
+
+            # Recursively search from provided dir and remove all jpg's
+            for rootdir, subdirs, filenames in os.walk(dir):
+                for file in filenames:
+                    if file.endswith('.jpg'):
+                        try:
+                            fpath = os.path.join(rootdir, file)
+                            os.remove(fpath)
+                            removedfiles.append(fpath)
+                        except OSError:
+                            print("File could not be deleted {0}".format(fpath))
+
+            return removedfiles
+
+        deleted = cleanfiles(rundir)
+        print(deleted)
 
     # Removed sample files, artwork, and compressed files
-    def samplefiles(rundir):
+    def samplefiles(dir):
         pass
 
     # Create a log of work completed 
-    def logs(rundir):
+    def logs(dir):
         pass
 
-
+    clean(rundir)      
 
 
 if __name__ == '__main__': 
