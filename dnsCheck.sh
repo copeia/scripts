@@ -5,16 +5,16 @@ printf "\nThis script requires the following software be installed and configure
 printf "\n1. aws-cli\n2. sendmail\n\n"
 
 
-# Set the domain 
+# Set the domain we will be changing the A-record for.
 domain="remote.ijc.io"
 
 # Get current public ip for local host
 rn_ip=`dig +short myip.opendns.com @resolver1.opendns.com`
 
-# Get the A record currently set for the 'remote.' domain in AWS
+# Get the A record currently set for the domain in AWS
 a_record=`aws route53 list-resource-record-sets --hosted-zone-id Z08754763HL4YFSVX2YU3 --max-items 1 --starting-token eyJTdGFydFJlY29yZE5hbWUiOiBudWxsLCAiU3RhcnRSZWNvcmRUeXBlIjogbnVsbCwgIlN0YXJ0UmVjb3JkSWRlbnRpZmllciI6IG51bGwsICJib3RvX3RydW5jYXRlX2Ftb3VudCI6IDJ9 | grep Value | awk -F '"' '{print $4}'`
 
-# If rn_ip and domain_record are not ==, update aws route53 with the new ip for the 'rmeote.' doamin
+# If rn_ip and a_record are not ==, update AWS Route53 with the new ip for the doamin
 if [ "$rn_ip" != "$a_record" ]; then
     # Defne JSON tenmplate 
     template='{
