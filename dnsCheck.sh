@@ -4,6 +4,13 @@
 printf "\nThis script requires the following software be installed and configured to run successfully:\n"
 printf "\n1. aws-cli\n2. sendmail\n\n"
 
+# Verify vpn isn't running
+vpn_state=`piactl get connectionstate`
+
+if [ $vpn_state == "Connected"]; do
+    printf "\nVPN is running, please disconnect and try re-running this script"
+    exit 0
+fi
 
 # Set the domain we will be changing the A-record for.
 domain="remote.ijc.io"
@@ -70,7 +77,8 @@ if [ "$rn_ip" != "$a_record" ]; then
             ;;
             *) # all other states, a.k.a failures
                 printf "\n\nShit done got borked, you should probably take a look\n\n"
-                aws route53 get-change --id $jid
+                fstate=`aws route53 get-change --id $jid`
+                printf "\n$fstate\n"
                 printf "\n¯\_(ツ)_/¯\n"
                 break
             ;;
