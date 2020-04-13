@@ -16,7 +16,8 @@ a_record=`aws route53 list-resource-record-sets --hosted-zone-id Z08754763HL4YFS
 
 # If rn_ip and a_record are not ==, update AWS Route53 with the new ip for the doamin
 if [ "$rn_ip" != "$a_record" ]; then
-    # Defne JSON tenmplate 
+
+    # Defne JSON tenmplate for this update. This is specifdically formatted as required by Route53.
     template='{
         "HostedZoneId": "Z08754763HL4YFSVX2YU3",
         "ChangeBatch": {
@@ -40,6 +41,7 @@ if [ "$rn_ip" != "$a_record" ]; then
             ]
         }
     }'
+
     # Update template with domain and new ip
     jbody=`echo "$template" | sed "s/DOMAIN/$domain/g; s/IP/$rn_ip/g"`
 
@@ -58,7 +60,7 @@ if [ "$rn_ip" != "$a_record" ]; then
         case $state in
             INSYNC) # Success
                 printf "\n\nSuccess.\n\nNew Zone Info:\n...............\n\n"
-                printf "$rn_ip $domain\n"
+                printf "$rn_ip     $domain\n"
                 break
             ;;
             PENDING) # Still prending
@@ -67,8 +69,9 @@ if [ "$rn_ip" != "$a_record" ]; then
                 sleep 3
             ;;
             *) # all other states, a.k.a failures
-                printf "\n\nShit done got borked\n\n"
-                echo "¯\_(ツ)_/¯"
+                printf "\n\nShit done got borked, you should probably take a look\n\n"
+                aws route53 get-change --id $jid
+                printf "\n¯\_(ツ)_/¯\n"
                 break
             ;;
         esac
