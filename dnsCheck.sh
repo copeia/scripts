@@ -7,8 +7,8 @@ printf "\n1. aws-cli\n2. sendmail\n\n"
 # Verify vpn isn't running
 vpn_state=`piactl get connectionstate`
 
-if [ $vpn_state == "Connected"]; do
-    printf "\nVPN is running, please disconnect and try re-running this script"
+if [ "$vpn_state" == "Connected" ]; then
+    printf "\nVPN is running, please disconnect and try re-running this script\n"
     exit 0
 fi
 
