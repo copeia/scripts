@@ -9,6 +9,10 @@ MS_MEM=`echo $(($MEMORY/2))`
 # Check if minecraft is running and assin process pid to var
 STATUS=`ps aux | grep minecraft | awk -F' ' '/java/ {print $2}'`
 
+# Male sure prereqs are installed 
+dnf install epel-release -y
+dnf install screen tar vim wget java -y
+
 # Check to see if Minecraft is running
 function check_status(){
     if [ "${STATUS}" ]; then
