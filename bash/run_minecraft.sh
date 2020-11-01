@@ -30,10 +30,7 @@ SCREEN_CHECK=`screen -ls | awk -F' ' '/minecraft/ {print $1}'`
 if [ "${SCREEN_CHECK}" ]; then
     printf "\e[0;32mKilling Old Screen\e[0m\n"
     screen -X -S ${SCREEN_CHECK} quit
-    
-    printf "\e[0;32mStarting Minecraft Server Detached\e[0m\n"
-    screen -t minecraft -d -m java -Xmx${MS_MEM}M -Xms${MS_MEM}M -jar minecraft.jar --nogui
-else
-    printf "\e[0;32mStarting Minecraft Server Detached\e[0m\n"
-    screen -t minecraft -d -m java -Xmx${MS_MEM}M -Xms${MS_MEM}M -jar minecraft.jar --nogui
 fi
+
+printf "\e[0;32mStarting Minecraft Server Detached\e[0m\n"
+screen -t minecraft -d -m java -Xmx${MS_MEM}M -Xms${MS_MEM}M -jar minecraft.jar --nogui
