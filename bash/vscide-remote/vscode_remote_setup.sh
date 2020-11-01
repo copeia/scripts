@@ -12,22 +12,6 @@
 # cyn=$'\e[1;36m'
 # end=$'\e[0m'
 
-# Install dep software 
-printf "\e[1;32m\nInstalling Dependency Software...\e[0m\n\n"
-dnf -y update 
-dnf -y install wget tar vim zsh util-linux-user git dnf-plugins-core yum-utils
-
-dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
-dnf -y install https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.6-3.3.el7.x86_64.rpm
-dnf -y install docker-ce
-systemctl enable --now docker
-
-curl -L "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-$(uname -s)-$(uname -m)" -o docker-compose
-mv docker-compose /usr/local/bin && sudo chmod +x /usr/local/bin/docker-compose
-
-# Disable firewalld so container networking works
-systemctl disable firewalld
-
 function git(){
     # Configure github account access 
     git config --global user.name "Ian Copeland"
@@ -71,3 +55,24 @@ function zsh(){
     source ~/.zshrc
     cd ~/
 }
+
+# Install dep software 
+printf "\e[1;32m\nInstalling Dependency Software...\e[0m\n\n"
+dnf -y update 
+dnf -y install wget tar vim zsh util-linux-user git dnf-plugins-core yum-utils unzip
+
+dnf config-manager --add-repo=https://download.docker.com/linux/centos/docker-ce.repo
+dnf -y install https://download.docker.com/linux/centos/7/x86_64/stable/Packages/containerd.io-1.2.6-3.3.el7.x86_64.rpm
+dnf -y install docker-ce
+systemctl enable --now docker
+
+TER_VER=`curl -s https://api.github.com/repos/hashicorp/terraform/releases/latest |  grep tag_name | cut -d: -f2 | tr -d \"\,\v | awk '{$1=$1};1'`
+wget https://releases.hashicorp.com/terraform/${TER_VER}/terraform_${TER_VER}_linux_amd64.zip
+unzip terraform_${TER_VER}_linux_amd64.zip
+mv terraform /usr/local/bin/
+
+curl -L "https://github.com/docker/compose/releases/download/1.23.2/docker-compose-$(uname -s)-$(uname -m)" -o docker-compose
+mv docker-compose /usr/local/bin && sudo chmod +x /usr/local/bin/docker-compose
+
+# Disable firewalld so container networking works
+systemctl disable firewalld
