@@ -21,3 +21,10 @@ function log_error {
   local -r message="$1"
   log "ERROR" "$message"
 }
+
+# Usage:
+```sh
+log_info "test message"
+log_warn "test message"
+log_error "test message"
+```
