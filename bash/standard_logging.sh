@@ -9,18 +9,17 @@ function log {
 
 function log_info {
   local -r message="$1"
-  log "INFO" "$message"
+  log "\e[36mINFO\e[0m" "$message"
 }
 
 function log_warn {
   local -r message="$1"
-  log "WARN" "$message"
+  log "\e[33mWARN\e[0m" "$message"
 }
 
 function log_error {
   local -r message="$1"
-  log "ERROR" "$message"
-}
+  lo
 
 # Usage:
 ```sh

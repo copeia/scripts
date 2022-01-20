@@ -9,17 +9,17 @@ function log {
 
 function log_info {
   local -r message="$1"
-  log "INFO" "$message"
+  log "\e[36mINFO\e[0m" "$message"
 }
 
 function log_warn {
   local -r message="$1"
-  log "WARN" "$message"
+  log "\e[33mWARN\e[0m" "$message"
 }
 
 function log_error {
   local -r message="$1"
-  log "ERROR" "$message"
+  log "\e[31mERROR\e[0m" "$message"
 }
 
 function pre_reqs {
@@ -34,9 +34,40 @@ function pre_reqs {
 
 function install_software {
   # Install Softwares
-  # - brew
-  # - pip
-  # - awscli 
+
+  INSTALL_COMPLETE=""
+  INSTALL_FAILED=""
+
+  function install_bash {
+    if ! $(which $1 &>/dev/null);
+    then
+      echo "Installing $1"
+      `$2`
+      if $?;
+      then
+        INSTALL_COMPLETE="$INSTALL_COMPLETE $1"
+      else
+        INSTALL_FAILED="$INSTALL_COMPLETE $1"
+      fi
+    else
+      echo "brew already installed"
+    fi
+  }
+
+  # Install Homebrew
+  install_bash brew $(/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)")
+  
+  # Install awscli 
+  curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"
+  sudo installer -pkg AWSCLIV2.pkg -target /
+  if ! $(grep "$HOME/Library/Python/3.9/bin")
+  then
+    PATH_LOOKUP=$(grep "export PATH" ~/.zshrc)
+    sed "s#$PATH_LOOKUP# export PATH=$HOME/bin:/usr/local/bin:$HOME/Library/Python/3.9/bin:$PATH"
+    export PATH=$HOME/bin:/usr/local/bin:$HOME/Library/Python/3.9/bin:$PATH
+  fi 
+  rm -f AWSCLIV2.pkg
+
   # - vscode 
   # - iterm2
   # - zsh
