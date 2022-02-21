@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# Lists of software to install #
+BREW_INSTALLS="ansible awscli docker helm kubernetes-cli warrensbox/tap/tfswitch"
+BREW_CASK_INSTALLS="1password google-chrome iterm2 slack spectacle visual-studio-code zoom"
+
 function log {
   local -r level="$1"
   local -r message="$2"
@@ -22,238 +26,95 @@ function log_error {
   log "\e[31mERROR\e[0m" "\e[31m$message\e[0m"
 }
 
-function pre_reqs {  
+function pre_reqs {
   # Find Process Architecture 
   PROC_ARCH=$(uname -m)
 
-  # Update all Mac software
-  log_info "Updating OS & Existing Apps"
-  softwareupdate -i -a
+  # Update Mac 
+  #softwareupdate -i -a
 }
 
 function install_software {
-
-  log_info "Starting Software Installations"
-  INSTALL_COMPLETE_LIST=""
-  INSTALL_FAILED_LIST=""
-  INSTALL_SKIPPED_LIST=""
-
-  # Install User Software functions
-  function install_sh_script {
-    # Basic Shell Script Installs #
-    ################################
-    # Used like:
-    # call_function app install_script/command
-
-    if ! which $1 >/dev/null 2>&1;
+  if ! $(xcode-select -p)
+  then 
+    # Install xcode 
+    log_info "Installing xcode"
+    xcode-select --install
+    if [ $? -eq 0 ]
     then
-      log_info "Installing $1"
-      $2
-      if $?;
-      then
-        INSTALL_COMPLETE_LIST="$INSTALL_COMPLETE_LIST '$1'"
-      else
-        INSTALL_FAILED_LIST="$INSTALL_FAILED_LIST '$1'"
-      fi
-    else
-      INSTALL_SKIPPED_LIST="$INSTALL_SKIPPED_LIST '$1'"
-      log_info "($1) Already Installed"
-      log_info "Install Location:" 
-      which $1
-      log_info "Version Info:"
-      $1 --version 
+      log_error "!! : Command failed"
     fi
-  }
+  fi
 
-  function install_cp_app {
-    # Basic download > move to /Applications #
-    ##########################################
-    # Used like:
-    # call_function "app name" "download url"
-
-    # Verify app installation status. Install if not already installed
-    if ! ls /Applications/ | grep -i "$1" >/dev/null 2>&1;
+  if ! $(which brew >/dev/null 2>&1)
+  then
+  log_info "Installing Homebrew"
+    # Once xcode is installed we can install homebrew
+    /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+    if [ $? -eq 0 ]
     then
-      log_info "Installing $1"
-      curl -sO $2
-
-      # Extract the archive containing the new application
-      if ls ./ | grep ".zip";
-      then
-        unzip *.zip > /dev/null; rm -f *.zip > /dev/null
-      elif ls ./ | grep ".tgz"
-      then
-       tar -xzf *.tgz > /dev/null; rm -f *.tgz > /dev/null
-      fi
-
-      # Move the extracted app into the /Applications dir
-      mv -f *.app /Applications/
-
-      # Verify installation status
-      if $? >/dev/null 2>&1;
-      then
-        INSTALL_COMPLETE_LIST="$INSTALL_COMPLETE_LIST '$1'"
-        log_info "Install Complete"
-      else
-        INSTALL_FAILED_LIST="$INSTALL_FAILED_LIST '$1'"
-        log_error "Install Failed"
-      fi
-    else
-      INSTALL_SKIPPED_LIST="$INSTALL_SKIPPED_LIST '$1'"
-      log_info "($1) Already Installed"
-      log_info "Install Location: /Applications/$1" 
+      log_error "!! : Command failed"
     fi
+  fi
 
-  }
+  # Run brew managed software installations 
+  log_info "Installing the following list of software: \n\n${BREW_INSTALLS}"
+  brew install ${BREW_INSTALLS}
+   
+  # Run brew cask managed software installations 
+  log_info "Installing the following list of software: \n\n${BREW_CASK_INSTALLS}"
+  brew install --cask ${BREW_CASK_INSTALLS}
 
-  function install_w_brew {
-    # Brew Installs #
-    #################
-    # Used like:
-    # call_function "List of apps to install"
-
-    for app in $1;
-    do 
-      if ! brew list | grep $app >/dev/null;
-      then
-        log_info "Installing: $app"
-        brew install $app >/dev/null
-        if [ $? -eq 0 ];
-        then
-          INSTALL_COMPLETE_LIST="$INSTALL_COMPLETE_LIST '$app'"
-        else
-          INSTALL_FAILED_LIST="$INSTALL_FAILED_LIST '$app'"
-        fi
-      else 
-        INSTALL_SKIPPED_LIST="$INSTALL_SKIPPED_LIST '$app'"
-        log_info "$1 Already installed via (brew)"
-      fi
-    done
-  }
-
-  function install_dmg {
-    # DMG Installs # 
-    ################
-    # Used like:
-    # call_function "app name" "download url"
-
-    if ! ls /Applications | grep -i "$1"; 
-    then
-      curl -O $2
-      IMAGE=`ls ./ | grep dmg`
-      sudo hdiutil attach ${IMAGE}
-      cp -R /Volumes/$1/$1.app /Applications/
-      if $? >/dev/null 2>&1;
-      then
-        INSTALL_COMPLETE_LIST="$INSTALL_COMPLETE_LIST '$1'"
-        log_info "Install Complete"
-      else
-        INSTALL_FAILED_LIST="$INSTALL_FAILED_LIST '$1'"
-        log_error "Install Failed"
-      fi
-      sudo hdiutil detach /Volumes/$1
-      else 
-        INSTALL_SKIPPED_LIST="$INSTALL_SKIPPED_LIST '$1'"
-        log_info "($1) Already Installed"
-        log_info "Install Location: /Applications/$1" 
-    fi
-  }
-
-  function install_pkg {
-    
-    if ! ls /Applications | grep -i "$1"; 
-    then
-      curl -o $1.pkg $2
-      sudo installer -package $1.pkg -target /
-      if $? >/dev/null 2>&1;
-      then
-        INSTALL_COMPLETE_LIST="$INSTALL_COMPLETE_LIST '$1'"
-        log_info "Install Complete"
-      else
-        INSTALL_FAILED_LIST="$INSTALL_FAILED_LIST '$1'"
-        log_error "Install Failed"
-      fi
-      rm -f $1.pkg >/dev/null
-    else
-      INSTALL_SKIPPED_LIST="$INSTALL_SKIPPED_LIST '$1'"
-      log_info "($1) Already Installed"
-      log_info "Install Location:" 
-      echo "/Applications/$1"
-    fi
-
-  }
-
-  # Basic Shell Script Installs #
-  if [ ! -d ~/.oh-my-zsh ];then install_sh_script "ohmyzsh" '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"';fi
-  install_sh_script "brew" '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
-  install_sh_script "aws" 'curl "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o "AWSCLIV2.pkg"; sudo installer -pkg AWSCLIV2.pkg -target /'
-    rm -f AWSCLIV2.pkg >/dev/null 2>&1
-  install_sh_script "ansible" "pip3 install --user ansible"
-  
-  # Brew Installs #
-  install_w_brew "jq terraform helm wget"
-
-  # Basic download > move to /Applications #
-  install_cp_app "Visual Studio Code" "https://az764295.vo.msecnd.net/stable/899d46d82c4c95423fb7e10e68eba52050e30ba3/VSCode-darwin-universal.zip" 
-  install_cp_app "iTerm" "https://iterm2.com/downloads/stable/iTerm2-3_4_15.zip"
-  install_cp_app "Spectacle" "https://github.com/eczarny/spectacle/releases/download/1.2/Spectacle+1.2.zip"
-
-  # DMG Installs # 
-  install_dmg "Slack" "https://downloads.slack-edge.com/releases/macos/4.23.0/prod/universal/Slack-4.23.0-macOS.dmg"
-  install_dmg "Google\ Chrome" "https://dl.google.com/chrome/mac/universal/stable/GGRO/googlechrome.dmg"
-  if [ $PROC_ARCH != "arm64" ] && [ ! -f /Applications/Docker.app ];then install_dmg "Docker" "https://desktop.docker.com/mac/main/amd64/Docker.dmg?utm_source=docker&utm_medium=webreferral&utm_campaign=docs-driven-download-mac-amd64";elif [ $PROC_ARCH == "arm64" ] && [ ! -f /Applications/Docker.app ];then install_dmg "Docker" "https://desktop.docker.com/mac/main/arm64/Docker.dmg\?utm_source\=docker\&utm_medium\=webreferral\&utm_campaign\=docs-driven-download-mac-arm64";fi
-
-  # PKG Installs #
-  if [ $PROC_ARCH != "arm64" ];then install_pkg "Zoom" "https://zoom.us/client/latest/Zoom.pkg";elif [ $PROC_ARCH == "arm64" ];then  install_pkg "Zoom" "https://zoom.us/client/latest/Zoom.pkg?archType=arm64";fi
-
-
-  # - kubectl 
-
+  if [ ! -d /Users/ian/.oh-my-zsh ]
+  then
+    # Install ohmyzsh 
+    log_info "Installing ohmyzsh"
+    sh -c "$(curl -fsSL https://raw.github.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
+    cp ./files/zshrc ~/.zshrc
+  fi
 }
 
 function configs {
   # Configure custom defaults/settings
   # - background
   # - color theme 
-  # - dock
-  #   - remove recently used apps
-  #   - fix size 
-  #   - remove all default shortcuts 
-  #   - 
-  # - 
-  echo ""
+  # - resolution and nightshift
+
+  ## Configure the dock ##
+  # https://developer.apple.com/documentation/devicemanagement/dock
+
+  # Only show active apps
+  defaults write com.apple.dock static-only -bool TRUE
+
+  # Show all hidden apps
+  defaults write com.apple.dock showhidden -bool TRUE
+
+  # Disable showing recent apps 
+  default write com.apple.dock showrecents-immutable -bool true
+
+  # Change to "suck" minimize behavior 
+  defaults write com.apple.dock mineffect suck
+
+  # Set the magnify size when hovering over dock items
+  defaults write com.apple.dock magnification -bool true
+  defaults write com.apple.dock largesize -int 100
+
+  # Enable or Disable app launch automation
+  defaults write com.apple.dock launchanim -bool true
+
+  # Kill/restart the dock to apply changes
+  killall Dock
+
+  # Resets back to defaults 
+  # defaults delete com.apple.dock; killall Dock
 }
 
-log_info "Starting New Mac Setup"
-log_info "This installs the software defined in the install functions as well as configures the terminal and doc."
-
-pre_reqs
+#pre_reqs
 install_software
 #configs
 
 
 # Final messages to user 
-if [ ! -z "${INSTALL_SKIPPED_LIST}" ];
-then 
-  log_info "Installed Software:"
-  for app in "${INSTALL_COMPLETE_LIST}";
-  do 
-    printf "${app}\n"
-done
-fi
-if [ ! -z "${INSTALL_SKIPPED_LIST}" ];
-then 
-  log_info "Install Skipped:"
-  for app in "${INSTALL_SKIPPED_LIST}";
-  do 
-    printf "${app}\n\n"
-  done
-fi
-if [ ! -z "${INSTALL_FAILED_LIST}" ];
-then
- log_error "Install Failed:"
- for app in "${INSTALL_FAILED_LIST}";
- do 
-  printf "${app}"
-done
-fi
+# - output installed software 
+# - output failures 
+# - output suggested items for manual config
