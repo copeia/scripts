@@ -94,6 +94,14 @@ function startup(){
     # done
 }
 
+##################
+## Script Entry ##
+##################
+
+# This should be run from the where the minecraft server files will live
+# Ex:
+#    ./run_minecraft.sh
+
 # Install/Upgrade Minecraft
 UPGRADE=$1
 
@@ -119,16 +127,17 @@ else
   log_info "Java already installed, skipping"
 fi
 
-if [ "${UPGRADE}" == "true" ];
-then
-  # Call kill_minecraft fuction, kill minecraft
-  kill_minecraft
-  # Update Minecraft to latest
-  get_latest_vers
-else
-  log_info "'true' param not passed when calling this script, minecraft will not be upgraded"
-  log_info "Param passed like './startup.sh true'"
-fi
+case $UPGRADE in
+  latest)
+    # Call kill_minecraft fuction, kill minecraft
+    kill_minecraft
+    # Update Minecraft to latest
+    get_latest_vers
+  ;;
+  *)
+    echo "catchall"
+  ;;
+esac
 
 # Start Minecraft
 if ! ps aux | grep "[j]ava" >/dev/null;
