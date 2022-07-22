@@ -23,45 +23,40 @@ function log_error {
   log "\e[31mERROR\e[0m" "\e[31m$message\e[0m"
 }
 
-# Check to see if Minecraft is running
-function kill_minecraft(){
-  # Check if minecraft is running and assign process pid to var
-  PID=`ps aux | grep "[j]ava" | awk -F' ' '{print $2}' | head -n1`
-
-  # Kill the currently running MC
-  if [ ! -z "${PID}" ]; then
-    log_warn "Killing Minecraft"
-	  kill -1 ${PID}
-    sleep 15
-  fi
-  log_warn "Minecraft Killed"
-}
-
 # Check to see if we are running latest, if not, download and install
 function get_latest_vers(){
-    # Get latest version and build
-    VERSION=`curl -s https://papermc.io/api/v2/projects/paper | jq -r '.versions | last'`
-    BUILD=`curl -s https://papermc.io/api/v2/projects/paper/versions/${VERSION} | jq -r '.builds | last'`
 
-    # Get the current version 
-    CURRENT_VERSION=$(awk -F'(' '/currentVersion/ {print $2}' ${MC_LOCATION}/version_history.json | grep -Eo '[+-]?[0-9]+([.][0-9]+)+([.][0-9]+)?')
-
-    if [ ${CURRENT_VERSION} == ${VERSION} ];
-    then
-        log_info "Current Version: ${VERSION}"
-        log_info "Current Build: ${BUILD}"
-        log_info "Already only latest, continuing"
+  if [[ "${1}" != "latest" ]]
+    then 
+      VERSION="${1}"
+      BUILD=`curl -s https://papermc.io/api/v2/projects/paper/versions/${VERSION} | jq -r '.builds | last'`
     else
-	    log_info "Found new version, downloading it now"
+      # Get latest version and build
+      VERSION=`curl -s https://papermc.io/api/v2/projects/paper | jq -r '.versions | last'`
+      BUILD=`curl -s https://papermc.io/api/v2/projects/paper/versions/${VERSION} | jq -r '.builds | last'`
+      log_warn "Latest Version ${VERSION} ${BUILD}"
+  fi
+    
+  # Get the current version 
+  CURRENT_VERSION=$(awk -F'(' '/currentVersion/ {print $3}' ${MC_LOCATION}/version_history.json | grep -Eo '[+-]?[0-9]+([.][0-9]+)+([.][0-9]+)?')
 
-        # Download latest
-        curl -s -o minecaft-${VERSION}.jar https://papermc.io/api/v2/projects/paper/versions/${VERSION}/builds/${BUILD}/downloads/paper-${VERSION}-${BUILD}.jar
-        mv ./minecaft-${VERSION}.jar $MC_LOCATION/server_jars/
-        chmod +x ${MC_LOCATION}/server_jars/* 
-        log_info "Downloaded and moved to: ${MC_LOCATION}/server_jars/minecaft-${VERSION}.jar"
-        # Change eula
-        sed -i 's/eula=false/eula=true/g' ${MC_LOCATION}/eula.txt
-    fi
+  if [ "${CURRENT_VERSION}" == "${VERSION}" ];
+  then
+      log_info "Current Version: ${VERSION}"
+      log_info "Current Build: ${BUILD}"
+      log_info "Already there... bud"
+  else	        
+    log_info "Found new version, downloading it now"
+
+    # Download latest
+    curl -s -o minecaft-${VERSION}.jar https://papermc.io/api/v2/projects/paper/versions/${VERSION}/builds/${BUILD}/downloads/paper-${VERSION}-${BUILD}.jar
+    mv ./minecaft-${VERSION}.jar $MC_LOCATION/server_jars/
+    chmod +x ${MC_LOCATION}/server_jars/* 
+    log_info "Downloaded and moved to: ${MC_LOCATION}/server_jars/minecaft-${VERSION}.jar"
+    # Change eula
+    sed -i 's/eula=false/eula=true/g' ${MC_LOCATION}/eula.txt
+    VERSION_CHANGED=true
+  fi
 }
 
 # Startup the Minecraft service in a screen
@@ -70,28 +65,33 @@ function startup(){
     # Divide available system mem and divide by 1.25 when over 6gb and 1.5 when under
     SYSTEM_MEMORY=`free -m | awk -F' ' '/Mem/ {print $2}'`
     MS_MEM=`echo | awk "{print ${SYSTEM_MEMORY}/1.25}" | awk -F. '{print $1}'`
-    VERSION=`curl -s https://papermc.io/api/v2/projects/paper | jq -r '.versions | last'`
+    VERSION="${1}"
 
     # Start the Minecraft server
     cd ${MC_LOCATION}
 
-    # In a new screen, start the Minecraft server
-    printf "\e[0;32mStarting Minecraft Server Detached\e[0m\n"
-    tmux new -d -s minecraft-server
-    tmux send-keys -t minecraft-server "set -g default-terminal 'screen-256color' && set -g history-limit 10000" C-m
-    
-    tmux send-keys -t minecraft-server "java -Xmx${MS_MEM}M -Xms${MS_MEM}M -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 \
-        -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 \
-        -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 \
-        -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 \
-        -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -jar $MC_LOCATION/server_jars/minecaft-${VERSION}.jar --nogui &" C-m
-    #tmux detach -s minecraft-server
+    echo "Changed: $VERSION_CHANGED"
 
-    # until tail -n17 ${MC_LOCATION}/logs/latest.log | grep -q "Done" ;
-    # do
-	  #   printf "\e[0;31m.\e[0m"
-    #     sleep 1
-    # done
+    if $($(tmux ls | grep -q "minecraft") && [ "${VERSION_CHANGED}" == true ]) || $($(tmux ls | grep -q "minecraft") && [ "${VERSION}" == "restart" ])
+      then
+        log_warn "Shutting down Minecraft - this could take 60 seconds or more"
+        tmux send-keys -t minecraft-server 'say "shutting down in 1 minute for maintenance"'
+        sleep 60
+        tmux send-keys -t minecraft-server 'stop'
+        tmux send-keys -t minecraft-server 'exit'
+        tmux kill-ses -t minecraft-server
+
+        # In a new screen, start the Minecraft server
+        log_warn "Starting Minecraft Server ${VERSION} Detached"
+        tmux new -d -s minecraft-server
+        tmux send-keys -t minecraft-server "set -g default-terminal 'screen-256color' && set -g history-limit 10000" C-m
+
+        tmux send-keys -t minecraft-server "java -Xmx${MS_MEM}M -Xms${MS_MEM}M -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 \
+            -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 \
+            -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 \
+            -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 \
+            -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -jar $MC_LOCATION/server_jars/minecaft-${VERSION}.jar --nogui" C-m
+    fi
 }
 
 ##################
@@ -100,10 +100,11 @@ function startup(){
 
 # This should be run from the where the minecraft server files will live
 # Ex:
-#    ./run_minecraft.sh
+#    ./run_minecraft.sh latest
 
 # Install/Upgrade Minecraft
 UPGRADE=$1
+VERSION_CHANGED=false
 
 # Directory where the minecraft server/worlds should live. 
 MC_LOCATION=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
@@ -129,20 +130,21 @@ fi
 
 case $UPGRADE in
   latest)
-    # Call kill_minecraft fuction, kill minecraft
-    kill_minecraft
     # Update Minecraft to latest
-    get_latest_vers
+    get_latest_vers "latest"
+    startup "${VERSION}"
+  ;;
+  "")
+    log_info "No version change requested"
+    startup "$(awk -F'(' '/currentVersion/ {print $2}' ${MC_LOCATION}/version_history.json | grep -Eo '[+-]?[0-9]+([.][0-9]+)+([.][0-9]+)?')"
+  ;;
+  restart)
+    startup "restart"
   ;;
   *)
-    echo "catchall"
+    log_info "Version $UPGRADE requested"
+    # Update Minecraft to latest
+    get_latest_vers "${UPGRADE}"
+    startup "$UPGRADE"
   ;;
 esac
-
-# Start Minecraft
-if ! ps aux | grep "[j]ava" >/dev/null;
-then
-  startup
-else 
-  log_info "Minecraft is already running"
-fi
