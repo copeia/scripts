@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Lists of software to install #
-BREW_INSTALLS="ansible awscli docker helm kubernetes-cli warrensbox/tap/tfswitch"
+BREW_INSTALLS="ansible awscli docker helm kubernetes-cli warrensbox/tap/tfswitch jq"
 BREW_CASK_INSTALLS="1password google-chrome iterm2 slack spectacle visual-studio-code zoom private-internet-access brave-browser"
 
 function log {
