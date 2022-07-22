@@ -6,7 +6,7 @@
 # `aws autoscaling describe-auto-scaling-groups | jq '.[] | .[] | (.AutoScalingGroupName) + " " + .Instances[0].InstanceType'`
 # ENV is set to pickup from your aws configuration, however this can be hard-coded if you wish.  
 
-ENV="simplebet-np-cc" 
+ENV="prod" 
 FUNCTION="data"
 ####################
 
