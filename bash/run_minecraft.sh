@@ -46,7 +46,7 @@ function get_latest_vers(){
       log_info "Current Build: ${BUILD}"
       log_info "Already there... bud"
   else	        
-    log_info "Found new version, downloading it now"
+    log_info "Found requested version, downloading it now"
 
     # Download latest
     curl -s -o minecaft-${VERSION}.jar https://papermc.io/api/v2/projects/paper/versions/${VERSION}/builds/${BUILD}/downloads/paper-${VERSION}-${BUILD}.jar
@@ -61,37 +61,35 @@ function get_latest_vers(){
 
 # Startup the Minecraft service in a screen
 function startup(){
-    # Get System Memory, then set Minecraft server memory
-    # Divide available system mem and divide by 1.25 when over 6gb and 1.5 when under
-    SYSTEM_MEMORY=`free -m | awk -F' ' '/Mem/ {print $2}'`
-    MS_MEM=`echo | awk "{print ${SYSTEM_MEMORY}/1.25}" | awk -F. '{print $1}'`
-    VERSION="${1}"
+  VERSION="${1}"
+  
+  if $($(tmux ls | grep -q "minecraft") && [ "${VERSION_CHANGED}" == true ]) || [ "${VERSION}" == "restart" ]
+    then
+      # Get System Memory, then set Minecraft server memory
+      # Divide available system mem and divide by 1.25 when over 6gb and 1.5 when under
+      SYSTEM_MEMORY=`free -m | awk -F' ' '/Mem/ {print $2}'`
+      MS_MEM=`echo | awk "{print ${SYSTEM_MEMORY}/1.25}" | awk -F. '{print $1}'`
+  
+      # Start the Minecraft server
+      cd ${MC_LOCATION}
 
-    # Start the Minecraft server
-    cd ${MC_LOCATION}
+      log_warn "Shutting down Minecraft - this could take 60 seconds or more"
+      tmux send-keys -t minecraft-server 'say "shutting down in 1 minute for maintenance"'
+      sleep 60
+      tmux send-keys -t minecraft-server 'stop'
+      tmux send-keys -t minecraft-server 'exit'
+      tmux kill-ses -t minecraft-server
 
-    echo "Changed: $VERSION_CHANGED"
-
-    if $($(tmux ls | grep -q "minecraft") && [ "${VERSION_CHANGED}" == true ]) || $($(tmux ls | grep -q "minecraft") && [ "${VERSION}" == "restart" ])
-      then
-        log_warn "Shutting down Minecraft - this could take 60 seconds or more"
-        tmux send-keys -t minecraft-server 'say "shutting down in 1 minute for maintenance"'
-        sleep 60
-        tmux send-keys -t minecraft-server 'stop'
-        tmux send-keys -t minecraft-server 'exit'
-        tmux kill-ses -t minecraft-server
-
-        # In a new screen, start the Minecraft server
-        log_warn "Starting Minecraft Server ${VERSION} Detached"
-        tmux new -d -s minecraft-server
-        tmux send-keys -t minecraft-server "set -g default-terminal 'screen-256color' && set -g history-limit 10000" C-m
-
-        tmux send-keys -t minecraft-server "java -Xmx${MS_MEM}M -Xms${MS_MEM}M -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 \
-            -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 \
-            -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 \
-            -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 \
-            -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -jar $MC_LOCATION/server_jars/minecaft-${VERSION}.jar --nogui" C-m
-    fi
+      # In a new screen, start the Minecraft server
+      log_warn "Starting Minecraft Server ${VERSION} Detached"
+      tmux new -d -s minecraft-server
+      tmux send-keys -t minecraft-server "set -g default-terminal 'screen-256color' && set -g history-limit 10000" C-m
+      tmux send-keys -t minecraft-server "java -Xmx${MS_MEM}M -Xms${MS_MEM}M -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 \
+          -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 \
+          -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 \
+          -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 \
+          -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -jar $MC_LOCATION/server_jars/minecaft-${VERSION}.jar --nogui" C-m
+  fi
 }
 
 ##################
@@ -128,6 +126,7 @@ else
   log_info "Java already installed, skipping"
 fi
 
+# Run mc functions based on user input
 case $UPGRADE in
   latest)
     # Update Minecraft to latest
