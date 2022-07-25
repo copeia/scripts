@@ -1,9 +1,39 @@
 #!/bin/bash
 
-# Lists of software to install #
-BREW_INSTALLS="ansible awscli docker helm kubernetes-cli warrensbox/tap/tfswitch jq"
-BREW_CASK_INSTALLS="1password google-chrome iterm2 slack spectacle visual-studio-code zoom private-internet-access brave-browser"
+# Lists of software to install - customize each as needed #
+BREW_INSTALLS="ansible \
+awscli \
+discord \
+docker \
+jq \
+helm \
+kubectl \
+warrensbox/tap/tfswitch \
+wget"
 
+BREW_CASK_INSTALLS="1password \
+google-chrome \
+iterm2 \
+slack \
+spectacle \
+visual-studio-code \
+zoom \
+private-internet-access \
+brave-browser"
+
+VSCODE_EXTENSIONS="hashicorp.hcl \
+hashicorp.terraform \
+ms-azuretools.vscode-docker \
+ms-python.python \
+ms-python.vscode-pylance \
+ms-toolsai.jupyter \
+ms-toolsai.jupyter-keymap \
+ms-toolsai.jupyter-renderers \
+ms-vscode-remote.remote-containers"
+
+declare -a DOCK_SHOW_APPS=("Google Chrome.app" "Brave Browser.app" "Visual Studio Code.app" "iterm.app" "zoom.us.app" "Slack.app" "1Password.app")
+ 
+# Logging functions
 function log {
   local -r level="$1"
   local -r message="$2"
@@ -26,15 +56,18 @@ function log_error {
   log "\e[31mERROR\e[0m" "\e[31m$message\e[0m"
 }
 
+# General Pre-Reqs
 function pre_reqs {
   # Find Process Architecture 
   PROC_ARCH=$(uname -m)
 
-  # Update Mac 
-  #softwareupdate -i -a
+  # Update Mac apps/software
+  softwareupdate -i -a
 }
 
+# Install all software
 function install_software {
+  # Install the xcode package as that is a pre-req for most others. 
   if ! xcode-select -p >/dev/null 2>&1;
   then 
     # Install xcode 
@@ -112,8 +145,12 @@ function install_software {
   fi
 }
 
+# Configure Mac profile and App Settings
 function configs {
-  ## Configure the dock ##
+  ## ################## ##
+  ## Configure Mac dock ##
+  ## ################## ##
+
   # https://developer.apple.com/documentation/devicemanagement/dock
 
   # Show all hidden, recent apps, and active
@@ -135,20 +172,36 @@ function configs {
   defaults delete com.apple.dock persistent-apps; killall Dock
 
   # Add custom apps to the dock
-  defaults write com.apple.dock persistent-apps -array-add "<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>/Applications/Google Chrome.app</string><key>_CFURLStringType</key><integer>0</integer></dict></dict></dict>"
-  defaults write com.apple.dock persistent-apps -array-add "<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>/Applications/Brave Browser.app</string><key>_CFURLStringType</key><integer>0</integer></dict></dict></dict>"
-  defaults write com.apple.dock persistent-apps -array-add "<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>/Applications/Visual Studio Code.app</string><key>_CFURLStringType</key><integer>0</integer></dict></dict></dict>"
-  defaults write com.apple.dock persistent-apps -array-add "<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>/Applications/iterm.app</string><key>_CFURLStringType</key><integer>0</integer></dict></dict></dict>"
-  defaults write com.apple.dock persistent-apps -array-add "<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>/Applications/zoom.us.app</string><key>_CFURLStringType</key><integer>0</integer></dict></dict></dict>"
-  defaults write com.apple.dock persistent-apps -array-add "<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>/Applications/Slack.app</string><key>_CFURLStringType</key><integer>0</integer></dict></dict></dict>"
-  defaults write com.apple.dock persistent-apps -array-add "<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>/Applications/1Password.app</string><key>_CFURLStringType</key><integer>0</integer></dict></dict></dict>"
+  for APP in "${DOCK_SHOW_APPS[@]}"
+    do
+      defaults write com.apple.dock persistent-apps -array-add "<dict><key>tile-data</key><dict><key>file-data</key><dict><key>_CFURLString</key><string>/Applications/${APP}</string><key>_CFURLStringType</key><integer>0</integer></dict></dict></dict>"
+  done
 
   # Kill/restart the dock to apply changes
   killall Dock
 
   # Resets back to defaults 
   # defaults delete com.apple.dock; killall Dock
-  ## End Dock Config ##
+
+  ## ################## ##
+  ## ZSH Configiuration ##
+  ## ################## ##
+  
+  log_info "Configuring your profile"
+
+  # Copy over the zsh config files
+  cp -R ./dot-rc-files/* ~/
+
+  ## #################### ##
+  ## vsCode Configuration ##
+  ## #################### ##
+  
+  # Install list of extensions
+  for EXT in "${VSCODE_EXTENSIONS}"
+    do 
+      log_info "Enabling vsCode extension: ${EXT}"
+      code --install-extension "${EXT}"
+  fi
 }
 
 SUCCESS=""

@@ -23,6 +23,25 @@ function log_error {
   log "\e[31mERROR\e[0m" "\e[31m$message\e[0m"
 }
 
+function command() {
+  # Get System Memory, then set Minecraft server memory
+  # Divide available system mem and divide by 1.25 when over 6gb and 1.5 when under
+  SYSTEM_MEMORY=`free -m | awk -F' ' '/Mem/ {print $2}'`
+  MS_MEM=`echo | awk "{print ${SYSTEM_MEMORY}/1.25}" | awk -F. '{print $1}'`
+  # Start the Minecraft server
+  cd ${MC_LOCATION}
+
+  # In a new screen, start the Minecraft server
+  log_warn "Starting Minecraft Server ${VERSION} Detached"
+  tmux new -d -s minecraft-server
+  tmux send-keys -t minecraft-server "set -g default-terminal 'screen-256color' && set -g history-limit 10000" C-m
+  tmux send-keys -t minecraft-server "java -Xmx${MS_MEM}M -Xms${MS_MEM}M -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 \
+      -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 \
+      -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 \
+      -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 \
+      -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -jar $MC_LOCATION/server_jars/minecaft-${VERSION}.jar --nogui" C-j
+}
+
 # Check to see if we are running latest, if not, download and install
 function get_latest_vers(){
 
@@ -65,18 +84,12 @@ function startup(){
   
   if $($(tmux ls | grep -q "minecraft") && [ "${VERSION_CHANGED}" == true ]) || [ "${VERSION}" == "restart" ]
     then
+      # If just restarting the service, check current version in config and run with that.
       if [ "${VERSION}" == "restart" ]
         then
           VERSION=$(awk -F'(' '/currentVersion/ {print $3}' ${MC_LOCATION}/version_history.json | grep -Eo '[+-]?[0-9]+([.][0-9]+)+([.][0-9]+)?')
       fi
-      # Get System Memory, then set Minecraft server memory
-      # Divide available system mem and divide by 1.25 when over 6gb and 1.5 when under
-      SYSTEM_MEMORY=`free -m | awk -F' ' '/Mem/ {print $2}'`
-      MS_MEM=`echo | awk "{print ${SYSTEM_MEMORY}/1.25}" | awk -F. '{print $1}'`
-  
-      # Start the Minecraft server
-      cd ${MC_LOCATION}
-
+      
       log_warn "Shutting down Minecraft - this could take 60 seconds or more"
       tmux send-keys -t minecraft-server 'say "shutting down in 1 minute for maintenance"\t'
       sleep 60
@@ -84,15 +97,11 @@ function startup(){
       tmux send-keys -t minecraft-server 'exit' C-j
       tmux kill-ses -t minecraft-server
 
-      # In a new screen, start the Minecraft server
-      log_warn "Starting Minecraft Server ${VERSION} Detached"
-      tmux new -d -s minecraft-server
-      tmux send-keys -t minecraft-server "set -g default-terminal 'screen-256color' && set -g history-limit 10000" C-m
-      tmux send-keys -t minecraft-server "java -Xmx${MS_MEM}M -Xms${MS_MEM}M -XX:+UseG1GC -XX:+ParallelRefProcEnabled -XX:MaxGCPauseMillis=200 \
-          -XX:+UnlockExperimentalVMOptions -XX:+DisableExplicitGC -XX:+AlwaysPreTouch -XX:G1NewSizePercent=30 -XX:G1MaxNewSizePercent=40 \
-          -XX:G1HeapRegionSize=8M -XX:G1ReservePercent=20 -XX:G1HeapWastePercent=5 -XX:G1MixedGCCountTarget=4 -XX:InitiatingHeapOccupancyPercent=15 \
-          -XX:G1MixedGCLiveThresholdPercent=90 -XX:G1RSetUpdatingPauseTimePercent=5 -XX:SurvivorRatio=32 -XX:+PerfDisableSharedMem -XX:MaxTenuringThreshold=1 \
-          -Dusing.aikars.flags=https://mcflags.emc.gs -Daikars.new.flags=true -jar $MC_LOCATION/server_jars/minecaft-${VERSION}.jar --nogui" C-j
+      # Call start function
+      command
+    else 
+      # Call start function
+      command
   fi
 }
 
