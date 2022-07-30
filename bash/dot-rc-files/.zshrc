@@ -79,7 +79,7 @@ source $ZSH/oh-my-zsh.sh
 KUBE_PS1_SEPARATOR=''
 KUBE_PS1_DIVIDER=':'
 KUBE_PS1_SYMBOL_USE_IMG=true
-source /opt/homebrew/opt/kube-ps1/share/kube-ps1.sh
+source /usr/local/opt/kube-ps1/share/kube-ps1.sh
 PS1='$(kube_ps1)'$PS1
 
 # User configuration
@@ -100,8 +100,8 @@ PS1='$(kube_ps1)'$PS1
 # export ARCHFLAGS="-arch x86_64"
 
 # Source custom built scripts for large profile functions
-source ~/zshrc/custom/cdp.zsh
-source ~/zshrc/custom/ke.zsh
+source ~/zsh/custom/cdp.zsh
+source ~/zsh/custom/ke.zsh
 
 # Set personal aliases, overriding those provided by oh-my-zsh libs,
 # plugins, and themes. Aliases can be placed here, though oh-my-zsh
