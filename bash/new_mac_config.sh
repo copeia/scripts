@@ -7,6 +7,7 @@ discord \
 docker \
 jq \
 helm \
+htop \
 kubectl \
 warrensbox/tap/tfswitch \
 wget"
@@ -21,6 +22,7 @@ zoom \
 private-internet-access \
 brave-browser"
 
+# List of vscode extensions to enable
 VSCODE_EXTENSIONS="hashicorp.hcl \
 hashicorp.terraform \
 ms-azuretools.vscode-docker \
@@ -31,7 +33,16 @@ ms-toolsai.jupyter-keymap \
 ms-toolsai.jupyter-renderers \
 ms-vscode-remote.remote-containers"
 
-declare -a DOCK_SHOW_APPS=("Google Chrome.app" "Brave Browser.app" "Visual Studio Code.app" "iterm.app" "zoom.us.app" "Slack.app" "1Password.app")
+# List of apps to be shown in the Mac dock. 
+declare -a DOCK_SHOW_APPS=("Google Chrome.app" \
+"Brave Browser.app" \
+"Visual Studio Code.app" \
+"iterm.app" \
+"zoom.us.app" \
+"Slack.app" \
+"Discord.app" \
+"1Password.app" \
+"Private Internet Access.app")
  
 # Logging functions
 function log {
@@ -139,9 +150,9 @@ function install_software {
     then
       log_error "!! : Command failed"
       FAILED="$FAILED ohmyzsh"
+    else
+      SUCCESS="${SUCCESS} ohmyzsh"
     fi
-    SUCCESS="${SUCCESS} ohmyzsh"
-    cp ./files/zshrc ~/.zshrc
   fi
 }
 
@@ -154,6 +165,7 @@ function configs {
   # https://developer.apple.com/documentation/devicemanagement/dock
 
   # Show all hidden, recent apps, and active
+  log_info "Configuring Dock"
   defaults write com.apple.dock showhidden -bool TRUE
   defaults write com.apple.dock showrecents -bool FALSE
 
@@ -187,7 +199,7 @@ function configs {
   ## ZSH Configiuration ##
   ## ################## ##
   
-  log_info "Configuring your profile"
+  log_info "Configuring your ZSH profile"
 
   # Copy over the zsh config files
   cp -R ./dot-rc-files/* ~/
@@ -197,6 +209,7 @@ function configs {
   ## #################### ##
   
   # Install list of extensions
+  log_info "Configuring vsCode extensions"
   for EXT in "${VSCODE_EXTENSIONS}"
     do 
       log_info "Enabling vsCode extension: ${EXT}"
@@ -216,12 +229,12 @@ install_software
 log_info "Configuring settings"
 configs
 
-if [ "${SUCCESS}" != "" ];
+if [ -z "${SUCCESS}" ];
 then
   log_info "Successful Installs: \n${SUCCESS}"
 fi 
 
-if [ "${FAILED}" != "" ];
+if [ -z "${FAILED}" ];
 then
   log_error "Failed Installs: \n${FAILED}"
 fi
