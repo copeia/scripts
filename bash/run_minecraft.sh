@@ -10,17 +10,17 @@ function log {
 
 function log_info {
   local -r message="$1"
-  log "\e[36mINFO\e[0m" "\e[36m$message\e[0m"
+  log "\e[36mINFO\e[0m" "\e[36m$message.\e[0m"
 }
 
 function log_warn {
   local -r message="$1"
-  log "\e[33mWARN\e[0m" "\e[33m$message\e[0m"
+  log "\e[33mWARN\e[0m" "\e[33m$message.\e[0m"
 }
 
 function log_error {
   local -r message="$1"
-  log "\e[31mERROR\e[0m" "\e[31m$message\e[0m"
+  log "\e[31mERROR\e[0m" "\e[31m$message.\e[0m"
 }
 
 function command() {
@@ -63,9 +63,9 @@ function get_latest_vers(){
   then
       log_info "Current Version: ${VERSION}"
       log_info "Current Build: ${BUILD}"
-      log_info "Already there... bud"
+      log_info "Already there... Bud."
   else	        
-    log_info "Found requested version, downloading it now"
+    log_info "Found requested version, downloading it now."
 
     # Download latest
     curl -s -o minecaft-${VERSION}.jar https://papermc.io/api/v2/projects/paper/versions/${VERSION}/builds/${BUILD}/downloads/paper-${VERSION}-${BUILD}.jar
@@ -82,7 +82,7 @@ function get_latest_vers(){
 function startup(){
   VERSION="${1}"
   
-  if $($(tmux ls | grep -q "minecraft") && [ "${VERSION_CHANGED}" == true ]) || [ "${VERSION}" == "restart" ]
+  if $($(tmux ls | grep -q "minecraft" >/dev/null 2>&1) && [ "${VERSION_CHANGED}" == true ]) || [ "${VERSION}" == "restart" ]
     then
       # If just restarting the service, check current version in config and run with that.
       if [ "${VERSION}" == "restart" ]
@@ -99,6 +99,9 @@ function startup(){
 
       # Call start function
       command
+    elif $(tmux ls | grep -q "minecraft" >/dev/null 2>&1)
+      then
+        log_warn "Minecraft already running, please pass a new version or 'restart' to restart the service"
     else 
       # Call start function
       command
@@ -124,10 +127,10 @@ MC_LOCATION=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 mkdir -p $MC_LOCATION/server_jars >/dev/null
 
 # Update all packages and install depts
-log_info "Update all packages and installing deps"
+log_info "Update all packages and install dnf packages"
 dnf -y update >/dev/null
 dnf -y install jq vim tmux >/dev/null
-log_info "Complete"
+log_info "dnf changes Complete"
 
 # If not installed, install java-openjdk 17
 if ! which java >/dev/null 2>&1;
@@ -136,25 +139,26 @@ then
   dnf -y install java-17-openjdk java-17-openjdk-devel >/dev/null
   log_info "Complete"
 else 
-  log_info "Java already installed, skipping"
+  log_info "Java already installed, skipping.."
 fi
 
 # Run mc functions based on user input
 case $UPGRADE in
   latest)
     # Update Minecraft to latest
+    log_info "Latest version requested"
     get_latest_vers "latest"
     startup "${VERSION}"
   ;;
   "")
-    log_info "No version change requested"
+    log_info "No minecraft server version change requested"
     startup "$(awk -F'(' '/currentVersion/ {print $2}' ${MC_LOCATION}/version_history.json | grep -Eo '[+-]?[0-9]+([.][0-9]+)+([.][0-9]+)?')"
   ;;
   restart)
     startup "restart"
   ;;
   *)
-    log_info "Version $UPGRADE requested"
+    log_info "Minecraft server version $UPGRADE requested"
     # Update Minecraft to latest
     get_latest_vers "${UPGRADE}"
     startup "$UPGRADE"
