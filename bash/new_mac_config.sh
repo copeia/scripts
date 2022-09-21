@@ -30,11 +30,8 @@ function pre_reqs {
 
   # Update Mac apps/software
   softwareupdate -i -a
-}
 
-# Install all software
-function install_software {
-  # Install the xcode package as that is a pre-req for most others. 
+    # Install the xcode package as that is a pre-req for most others. 
   if ! xcode-select -p >/dev/null 2>&1;
   then 
     # Install xcode 
@@ -62,7 +59,10 @@ function install_software {
         SUCCESS="${SUCCESS} brew"
       fi
   fi
+}
 
+# Install all software
+function install_software {
   # Run brew managed software installations
   log_info "Starting brew installs"
   for i in "${BREW_INSTALLS[@]}";
@@ -203,9 +203,10 @@ function configs {
   done
 }
 
-##### 
+################## 
 ## Script Entry ##
-#####
+##################
+
 FULL_NAME="Ian Copeland"
 EMAIL="copeiaj@gmail.com"
 SUCCESS=""
