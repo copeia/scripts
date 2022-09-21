@@ -1,5 +1,6 @@
 #!/bin/sh
 
+# Meant to run on a server behind a dynamic ip - Script run as cron will get new ip, then update an aws hosted domain with the new ip
 
 printf "\nThis script requires the following software be installed and configured to run successfully:\n"
 printf "\n1. aws-cli\n2. sendmail\n\n"

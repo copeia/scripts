@@ -235,6 +235,7 @@ declare -a BREW_CASK_INSTALLS=(
  "iterm2"\
  "slack"\
  "spectacle"\
+ "steam"\
  "visual-studio-code"\
  "zoom"\
  "private-internet-access"\

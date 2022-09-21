@@ -1,5 +1,7 @@
 #!/bin/bash
 
+# Runs/installs a minecraft server in a tmux session
+
 # Configure script logging 
 function log {
   local -r level="$1"
