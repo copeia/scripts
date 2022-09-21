@@ -1,48 +1,58 @@
 #!/bin/bash
 
-# Lists of software to install - customize each as needed #
-BREW_INSTALLS="ansible \
-awscli \
-discord \
-docker \
-jq \
-helm \
-htop \
-kubectl \
-warrensbox/tap/tfswitch \
-wget"
+# List of brew and brew casks to install - customize each as needed
+declare -a BREW_INSTALLS=(
+ "ansible"\
+ "awscli"\
+ "discord"\
+ "docker"\
+ "gh"\
+ "helm"\
+ "htop"\
+ "jq"\
+ "kubectl"\
+ "kube-ps1"\
+ "warrensbox/tap/tfswitch"\
+ "wget"
+)
 
-BREW_CASK_INSTALLS="1password \
-google-chrome \
-iterm2 \
-slack \
-spectacle \
-visual-studio-code \
-zoom \
-private-internet-access \
-brave-browser"
+declare -a BREW_CASK_INSTALLS=(
+ "1password"\
+ "google-chrome"\
+ "iterm2"\
+ "slack"\
+ "spectacle"\
+ "visual-studio-code"\
+ "zoom"\
+ "private-internet-access"\
+ "brave-browser"
+)
 
 # List of vscode extensions to enable
-VSCODE_EXTENSIONS="hashicorp.hcl \
-hashicorp.terraform \
-ms-azuretools.vscode-docker \
-ms-python.python \
-ms-python.vscode-pylance \
-ms-toolsai.jupyter \
-ms-toolsai.jupyter-keymap \
-ms-toolsai.jupyter-renderers \
-ms-vscode-remote.remote-containers"
+declare -a VSCODE_EXTENSIONS=(
+ "hashicorp.hcl"\
+ "hashicorp.terraform"\
+ "ms-azuretools.vscode-docker"\
+ "ms-python.python"\
+ "ms-python.vscode-pylance"\
+ "ms-toolsai.jupyter"\
+ "ms-toolsai.jupyter-keymap"\
+ "ms-toolsai.jupyter-renderers"\
+ "ms-vscode-remote.remote-containers"
+)
 
 # List of apps to be shown in the Mac dock. 
-declare -a DOCK_SHOW_APPS=("Google Chrome.app" \
-"Brave Browser.app" \
-"Visual Studio Code.app" \
-"iterm.app" \
-"zoom.us.app" \
-"Slack.app" \
-"Discord.app" \
-"1Password.app" \
-"Private Internet Access.app")
+declare -a DOCK_SHOW_APPS=(
+ "Google Chrome.app"\
+ "Brave Browser.app"\
+ "Visual Studio Code.app"\
+ "iterm.app"\
+ "zoom.us.app"\
+ "Slack.app"\
+ "Discord.app"\
+ "1Password.app"\
+ "Private Internet Access.app"
+)
  
 # Logging functions
 function log {
@@ -107,12 +117,13 @@ function install_software {
       fi
   fi
 
-  # Run brew managed software installations 
-  for i in "${BREW_INSTALLS}";
+  # Run brew managed software installations
+  log_info "Starting brew installs"
+  for i in "${BREW_INSTALLS[@]}";
   do 
     if ! brew list "${i}" >/dev/null 2>&1;
     then
-      log_info "Installing the following software: \n${i}"
+      log_info "Installing ${i}"
       brew install "${i}"
       if [ "$?" -eq 1 ]
       then
@@ -125,11 +136,12 @@ function install_software {
   done
    
   # Run brew cask managed software installations 
-  for i in "${BREW_CASK_INSTALLS}";
+  log_info "Starting bew cask installs"
+  for i in "${BREW_CASK_INSTALLS[@]}";
   do 
     if ! brew list --cask "${i}" >/dev/null 2>&1;
     then
-      log_info "Installing the following software: \n${i}"
+      log_info "Installing ${i}"
       brew install --cask "${i}"
       if [ "$?" -eq 1 ]
       then
@@ -198,11 +210,21 @@ function configs {
   ## ################## ##
   ## ZSH Configiuration ##
   ## ################## ##
-  
-  log_info "Configuring your ZSH profile"
 
   # Copy over the zsh config files
-  cp -R ./dot-rc-files/* ~/
+  log_info "Configuring your ZSH profile"
+  if [ ! -d ~/zsh ]
+  then
+    # Copy dirs
+    cp -R ./dot-rc-files/ ~/
+    if [ "$?" -eq 0 ]
+    then
+      log_error "!! : Command failed"
+      FAILED="$FAILED ohmyzsh"
+    else
+      SUCCESS="${SUCCESS} ohmyzsh"
+    fi
+  fi
 
   ## #################### ##
   ## vsCode Configuration ##
@@ -210,11 +232,11 @@ function configs {
   
   # Install list of extensions
   log_info "Configuring vsCode extensions"
-  for EXT in "${VSCODE_EXTENSIONS}"
+  for EXT in "${VSCODE_EXTENSIONS[@]}"
     do 
       log_info "Enabling vsCode extension: ${EXT}"
       code --install-extension "${EXT}"
-  fi
+  done
 }
 
 SUCCESS=""
