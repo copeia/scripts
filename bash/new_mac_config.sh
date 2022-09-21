@@ -1,58 +1,4 @@
 #!/bin/bash
-
-# List of brew and brew casks to install - customize each as needed
-declare -a BREW_INSTALLS=(
- "ansible"\
- "awscli"\
- "bash" \
- "discord"\
- "docker"\
- "gh"\
- "helm"\
- "htop"\
- "jq"\
- "kubectl"\
- "kube-ps1"\
- "warrensbox/tap/tfswitch"\
- "wget"
-)
-
-declare -a BREW_CASK_INSTALLS=(
- "1password"\
- "google-chrome"\
- "iterm2"\
- "slack"\
- "spectacle"\
- "visual-studio-code"\
- "zoom"\
- "private-internet-access"\
- "brave-browser"
-)
-
-# List of vscode extensions to enable
-declare -a VSCODE_EXTENSIONS=(
- "hashicorp.hcl"\
- "hashicorp.terraform"\
- "ms-azuretools.vscode-docker"\
- "ms-python.python"\
- "ms-python.vscode-pylance"\
- "ms-toolsai.jupyter"\
- "ms-toolsai.jupyter-keymap"\
- "ms-toolsai.jupyter-renderer"
-)
-
-# List of apps to be shown in the Mac dock. 
-declare -a DOCK_SHOW_APPS=(
- "Google Chrome.app"\
- "Brave Browser.app"\
- "Visual Studio Code.app"\
- "iterm.app"\
- "zoom.us.app"\
- "Slack.app"\
- "Discord.app"\
- "1Password.app"\
- "Private Internet Access.app"
-)
  
 # Logging functions
 function log {
@@ -170,10 +116,7 @@ function install_software {
 
 # Configure Mac profile and App Settings
 function configs {
-  ## ################## ##
-  ## Configure Mac dock ##
-  ## ################## ##
-
+  ## Configure Mac dock 
   # https://developer.apple.com/documentation/devicemanagement/dock
 
   # Remove all default apps 
@@ -207,7 +150,7 @@ function configs {
   # Resets back to defaults 
   # defaults delete com.apple.dock; killall Dock
 
-  # TO-DO #
+  ## TO-DO #
   ## Configure chrome extensions
   # EX_PATH='/Users/ian/Library/Application\ Support/Google/Chrome/Default/Extensions/'
   # ## Chrome Extensions
@@ -239,24 +182,88 @@ function configs {
     fi
   fi
 
-  ## #################### ##
-  ## vsCode Configuration ##
-  ## #################### ##
+  ## Git Configuration
+  log_info "Configuring git"
+  git config --global user.name "${FULL_NAME}"
+  git config --global user.email "${EMAIL}"
+  git config --global color.ui true
+  git config --global core.editor code
+
+  ##VScode Configuration
   
   # Install list of extensions
+  log_info "Configuring VScode"
   for i in ${VSCODE_EXTENSIONS[@]}
     do 
       if ! $(code --list-extensions | grep -q "${i}")
        then
-        log_info "Configuring vsCode extensions"
         log_info "Enabling vsCode extension: ${i}"
         code --install-extension "${i}"
       fi
   done
 }
 
+##### 
+## Script Entry ##
+#####
+FULL_NAME="Ian Copeland"
+EMAIL="copeiaj@gmail.com"
 SUCCESS=""
 FAILED=""
+
+# List of brew and brew casks to install - customize each as needed
+declare -a BREW_INSTALLS=(
+ "ansible"\
+ "awscli"\
+ "bash" \
+ "discord"\
+ "docker"\
+ "gh"\
+ "helm"\
+ "htop"\
+ "jq"\
+ "kubectl"\
+ "kube-ps1"\
+ "warrensbox/tap/tfswitch"\
+ "wget"
+)
+
+declare -a BREW_CASK_INSTALLS=(
+ "1password"\
+ "google-chrome"\
+ "iterm2"\
+ "slack"\
+ "spectacle"\
+ "visual-studio-code"\
+ "zoom"\
+ "private-internet-access"\
+ "brave-browser"
+)
+
+# List of vscode extensions to enable
+declare -a VSCODE_EXTENSIONS=(
+ "hashicorp.hcl"\
+ "hashicorp.terraform"\
+ "ms-azuretools.vscode-docker"\
+ "ms-python.python"\
+ "ms-python.vscode-pylance"\
+ "ms-toolsai.jupyter"\
+ "ms-toolsai.jupyter-keymap"\
+ "ms-toolsai.jupyter-renderer"
+)
+
+# List of apps to be shown in the Mac dock. 
+declare -a DOCK_SHOW_APPS=(
+ "Google Chrome.app"\
+ "Brave Browser.app"\
+ "Visual Studio Code.app"\
+ "iterm.app"\
+ "zoom.us.app"\
+ "Slack.app"\
+ "Discord.app"\
+ "1Password.app"\
+ "Private Internet Access.app"
+)
 
 case $1 in
   pre)
