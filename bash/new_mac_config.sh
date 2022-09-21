@@ -4,6 +4,7 @@
 declare -a BREW_INSTALLS=(
  "ansible"\
  "awscli"\
+ "bash" \
  "discord"\
  "docker"\
  "gh"\
@@ -37,8 +38,7 @@ declare -a VSCODE_EXTENSIONS=(
  "ms-python.vscode-pylance"\
  "ms-toolsai.jupyter"\
  "ms-toolsai.jupyter-keymap"\
- "ms-toolsai.jupyter-renderers"\
- "ms-vscode-remote.remote-containers"
+ "ms-toolsai.jupyter-renderer"
 )
 
 # List of apps to be shown in the Mac dock. 
@@ -176,6 +176,9 @@ function configs {
 
   # https://developer.apple.com/documentation/devicemanagement/dock
 
+  # Remove all default apps 
+  defaults delete com.apple.dock persistent-apps
+
   # Show all hidden, recent apps, and active
   log_info "Configuring Dock"
   defaults write com.apple.dock showhidden -bool TRUE
@@ -187,13 +190,10 @@ function configs {
   # Set the tileize, enable magnify, and set magnify size when hovering over dock items
   defaults write com.apple.dock tilesize -int 55
   defaults write com.apple.dock magnification -bool TRUE
-  defaults write com.apple.dock largesize -int 70; killall Dock
+  defaults write com.apple.dock largesize -int 70
 
   # Enable or Disable app launch automation
   defaults write com.apple.dock launchanim -bool TRUE
-
-  # Remove all default apps 
-  defaults delete com.apple.dock persistent-apps; killall Dock
 
   # Add custom apps to the dock
   for APP in "${DOCK_SHOW_APPS[@]}"
@@ -207,14 +207,27 @@ function configs {
   # Resets back to defaults 
   # defaults delete com.apple.dock; killall Dock
 
-  ## ################## ##
-  ## ZSH Configiuration ##
-  ## ################## ##
+  # TO-DO #
+  ## Configure chrome extensions
+  # EX_PATH='/Users/ian/Library/Application\ Support/Google/Chrome/Default/Extensions/'
+  # ## Chrome Extensions
+  # declare -a EXTLIST=(
+  #   ["adblock-plus-free-ad-bloc"]="cfhdojbkjhnklbpkdaibdccddilifddb"
+  #   ["tab-groups-extension"]="nplimhmoanghlebhdiboeellhgmgommi"
+  # )
+  # for i in "${!EXTLIST[@]}"; do
+  #   if [ -z $(ls /Users/ian/Library/Application\ Support/Google/Chrome/Default/Extensions/ | grep "${EXTLIST[$i]}") ]
+  #    then
+  #     log_info "Installing Chrome extension: ${EXTLIST[$i]}"
+  #     echo '{"external_update_url": "https://clients2.google.com/service/update2/crx"}' > /Users/ian/Library/Application\ Support/Google/Chrome/Default/Extensions/${EXTLIST[$i]}.json
+  #   fi
+  # done
 
+  ## ZSH Configiuration 
   # Copy over the zsh config files
-  log_info "Configuring your ZSH profile"
   if [ ! -d ~/zsh ]
   then
+    log_info "Configuring your ZSH profile"
     # Copy dirs
     cp -R ./dot-rc-files/ ~/
     if [ "$?" -eq 0 ]
@@ -231,32 +244,51 @@ function configs {
   ## #################### ##
   
   # Install list of extensions
-  log_info "Configuring vsCode extensions"
-  for EXT in "${VSCODE_EXTENSIONS[@]}"
+  for i in ${VSCODE_EXTENSIONS[@]}
     do 
-      log_info "Enabling vsCode extension: ${EXT}"
-      code --install-extension "${EXT}"
+      if ! $(code --list-extensions | grep -q "${i}")
+       then
+        log_info "Configuring vsCode extensions"
+        log_info "Enabling vsCode extension: ${i}"
+        code --install-extension "${i}"
+      fi
   done
 }
 
 SUCCESS=""
 FAILED=""
 
-log_info "Getting hardware info and updating the OS"
-pre_reqs
+case $1 in
+  pre)
+    log_info "Getting hardware info and updating the OS"
+    pre_reqs
+  ;;
+  install)
+    log_info "Verifying apps are installed"
+    install_software
+  ;;
+  configs)
+    log_info "Configs/Extensions"
+    configs
+  ;;
+  *)
+    log_info "Getting hardware info and updating the OS"
+    pre_reqs
+  
+    log_info "Verifying apps are installed"
+    install_software
+  
+    log_info "Configs/Extensions"
+    configs
+  ;;
+esac
 
-log_info "Verifying apps are installed"
-install_software
-
-log_info "Configuring settings"
-configs
-
-if [ -z "${SUCCESS}" ];
+if [ ! -z "${SUCCESS}" ];
 then
   log_info "Successful Installs: \n${SUCCESS}"
 fi 
 
-if [ -z "${FAILED}" ];
+if [ ! -z "${FAILED}" ];
 then
   log_error "Failed Installs: \n${FAILED}"
 fi
