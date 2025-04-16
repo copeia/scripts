@@ -262,6 +262,7 @@ declare -a DOCK_SHOW_APPS=(
  "iterm.app"\
  "zoom.us.app"\
  "Slack.app"\
+ "Steam.app"\
  "Discord.app"\
  "1Password.app"\
  "Private Internet Access.app"
