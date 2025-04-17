@@ -1,18 +1,18 @@
 import os
 import re
 
+# Optional: define a set of known/allowed extensions
+KNOWN_EXTENSIONS = {".jpg", ".jpeg", ".png", ".mkv", ".mp4", ".avi", ".mov", ".srt", ".rar", ".txt", ".nfo"}
 
 def clean_name(name: str, is_dir: bool = False) -> str:
-    # Handle directories
+    original_name = name
+
     if is_dir:
         name_part, ext = name, ""
     else:
-        # Temporarily remove extension for processing
         name_part, ext = os.path.splitext(name)
-
-        # If the name has multiple dots (e.g. file.part.one.mkv), re-attach them
-        if not ext and "." in name:
-            # It's probably not a real extension — treat the whole thing as the name
+        if ext.lower() not in KNOWN_EXTENSIONS:
+            # Treat it all as name if extension is not known
             name_part, ext = name, ""
 
     # Lowercase
@@ -21,17 +21,17 @@ def clean_name(name: str, is_dir: bool = False) -> str:
     # Replace _, ., and spaces with hyphens
     name_part = re.sub(r"[_. ]+", "-", name_part)
 
-    # Replace non-alphanumeric characters (except hyphen) with hyphen
+    # Replace all other non-alphanum except hyphen with hyphen
     name_part = re.sub(r"[^a-z0-9-]+", "-", name_part)
 
     # Collapse multiple hyphens
     name_part = re.sub(r"-{2,}", "-", name_part)
 
-    # Remove resolution tags and everything after (if not at the start)
+    # Remove resolution tags (if not prefix)
     if not name_part.startswith(("1080p", "2160p", "720p")):
         name_part = re.split(r"-(1080p|2160p|720p)\b", name_part)[0]
 
-    # Remove trailing hyphens and periods
-    name_part = name_part.rstrip("-.")
+    # Final cleanup: remove trailing hyphens, periods, whitespace
+    name_part = name_part.strip("- .")
 
     return f"{name_part}{ext.lower()}"
