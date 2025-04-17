@@ -1,0 +1,5 @@
+# No external dependencies required — standard library only.
+
+# Development/testing tools:
+pytest
+coverage
