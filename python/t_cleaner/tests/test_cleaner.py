@@ -24,8 +24,12 @@ class TestCleaner(unittest.TestCase):
         self.assertEqual(clean_name("something.... "), "something")
 
     def test_full_cleanup(self):
-        self.assertEqual(clean_name("Some File Name-1990.$2@_-.mp4"), "some-file-name-1990-2.mp4")
-        self.assertEqual(clean_name("Some File Name-1990.$2._.mp4"), "some-file-name-1990-2.mp4")
+        self.assertEqual(
+            clean_name("Some File Name-1990.$2@_-.mp4"), "some-file-name-1990-2.mp4"
+        )
+        self.assertEqual(
+            clean_name("Some File Name-1990.$2._.mp4"), "some-file-name-1990-2.mp4"
+        )
 
 
 if __name__ == "__main__":
