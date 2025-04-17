@@ -5,7 +5,7 @@ from cleaner import clean_name
 def list_rename_and_cleanup(base_path, dry_run=False):
 
     renamed_items, deleted_files = [], []
-    delete_exts = {".txt", ".nfo", ".png", ".jpeg", ".jpg"}
+    delete_exts = {".txt", ".nfo", ".png", ".jpeg", ".jpg", ".xml"}
 
     for root, dirs, files in os.walk(base_path, topdown=False):
 

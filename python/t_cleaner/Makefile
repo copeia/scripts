@@ -15,7 +15,7 @@ fmt:
 	pre-commit run --all-files
 
 run:
-	python main.py
+	python3 main.py
 
 # Install required dependencies
 setup:
@@ -23,4 +23,4 @@ setup:
 	pre-commit install
 
 test:
-	python -m unittest discover -s tests
+	python3 -m unittest discover -s tests
