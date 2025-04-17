@@ -1,6 +1,7 @@
 import os
 import re
 
+
 def clean_name(name: str, is_dir: bool = False) -> str:
     # Separate name and extension if it's a file
     if not is_dir:
