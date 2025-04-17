@@ -18,24 +18,14 @@ def list_rename_and_cleanup(base_path, dry_run=False):
             if ext in delete_exts:
                 deleted_files.append(path)
                 if not dry_run:
-                    try:
-                        os.remove(path)
-                    except FileNotFoundError:
-                        print(f"File missing, skipped: {os(path)}")
-                    except Exception as e:
-                        print(f"Failed to delete {os(path)}: {e}")
+                    os.remove(path)
             else:
                 # Rename file per cleaner rules
                 new_path = os.path.join(root, clean_name(filename))
                 if new_path != path:
                     renamed_items.append((path, new_path))
                     if not dry_run:
-                        try:
-                            os.rename(path, new_path)
-                        except FileNotFoundError:
-                            print(f"File missing, skipped: {os(path)}")
-                        except Exception as e:
-                            print(f"Failed to rename {os(path)}: {e}")
+                        os.rename(path, new_path)
 
         # Rename dirs as defined by cleaner rules
         for dirname in dirs:
@@ -44,12 +34,7 @@ def list_rename_and_cleanup(base_path, dry_run=False):
             if new_path != orig:
                 renamed_items.append((orig, new_path))
                 if not dry_run:
-                    try:
-                        os.rename(orig, new_path)
-                    except FileNotFoundError:
-                        print(f"Directory missing, skipped: {os(path)}")
-                    except Exception as e:
-                        print(f"Failed to rename {os(path)}: {e}")
+                    os.rename(orig, new_path)
     return renamed_items, deleted_files
 
 
@@ -71,10 +56,5 @@ def remove_rar_files(base_path, dry_run=False):
             if is_rar_file(path):
                 deleted.append(path)
                 if not dry_run:
-                    try:
-                        os.remove(path)
-                    except FileNotFoundError:
-                        print(f"File missing, skipped: {os(path)}")
-                    except Exception as e:
-                        print(f"Failed to delete {os(path)}: {e}")
+                    os.remove(path)
     return deleted
