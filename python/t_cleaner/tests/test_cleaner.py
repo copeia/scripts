@@ -1,6 +1,7 @@
 import unittest
 from cleaner import clean_name
 
+
 class TestCleaner(unittest.TestCase):
     def test_basic_cleanup(self):
         self.assertEqual(clean_name("Some File Name.txt"), "some-file-name.txt")
@@ -22,5 +23,6 @@ class TestCleaner(unittest.TestCase):
     def test_trailing_hyphen_removed(self):
         self.assertEqual(clean_name("something.... "), "something")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

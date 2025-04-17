@@ -3,3 +3,5 @@
 # Development/testing tools:
 coverage
 codecov
+black
+pre-commit

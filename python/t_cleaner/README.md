@@ -2,8 +2,8 @@
 
 [![Python](https://img.shields.io/badge/python-3.7%2B-blue.svg)](https://www.python.org/)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
-[![Tests](https://github.com/copeia/scripts/actions/workflows/python-app.yml/badge.svg)](https://github.com/copeia/scripts/actions)
-[![Coverage Status](https://coveralls.io/repos/github/username/repo-name/badge.svg?branch=master)](https://coveralls.io/github/copeia/repo-name?branch=master)
+[![Tests](https://github.com/copeia/scripts/actions/workflows/t_cleaner.yml/badge.svg)](https://github.com/copeia/scripts/actions)
+[![Coverage Status](https://coveralls.io/repos/github/copeia/scripts:python/t_cleaner/badge.svg?branch=master)](https://coveralls.io/github/copeia/scripts:python/t_cleaner?branch=master)
 
 > A command-line tool to recursively clean, rename, and tidy up your files and folders.
 

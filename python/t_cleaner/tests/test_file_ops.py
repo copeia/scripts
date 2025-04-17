@@ -3,6 +3,7 @@ import os
 import tempfile
 from file_ops import list_rename_and_cleanup, is_rar_file, remove_rar_files
 
+
 class TestFileOps(unittest.TestCase):
     def setUp(self):
         self.test_dir = tempfile.TemporaryDirectory()
@@ -15,13 +16,13 @@ class TestFileOps(unittest.TestCase):
             "movie.1080p.mkv": b"rename test",
         }
         for name, content in self.test_files.items():
-            with open(os.path.join(self.base_path, name), 'wb') as f:
+            with open(os.path.join(self.base_path, name), "wb") as f:
                 f.write(content)
 
         # Create RAR file
         self.rar_file_path = os.path.join(self.base_path, "archive_no_ext")
-        with open(self.rar_file_path, 'wb') as f:
-            f.write(b'Rar!\x1a\x07\x00extra')
+        with open(self.rar_file_path, "wb") as f:
+            f.write(b"Rar!\x1a\x07\x00extra")
 
     def tearDown(self):
         self.test_dir.cleanup()
@@ -43,5 +44,6 @@ class TestFileOps(unittest.TestCase):
         self.assertIn(self.rar_file_path, removed)
         self.assertFalse(os.path.exists(self.rar_file_path))
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()
