@@ -5,42 +5,32 @@ def clean_name(name):
     # Separate name and extension
     name_part, ext = os.path.splitext(name)
 
-    # List of strings to remove if they appear (unless the name starts with them) and everything following
-    remove_prefixes = ['1080p', '2160p', '720p']
-    
-    # Condense the removal logic into a loop
-    for prefix in remove_prefixes:
+    # Remove unwanted strings unless they're at the start
+    for prefix in ['1080p', '2160p', '720p']:
         if not name_part.startswith(prefix):
             name_part = re.sub(rf'{prefix}.*', '', name_part)
 
-    # Define the replacement rules for characters
-    replacements = {
-        '_': '-',
-        '.': '-',
-        ' ': '-'
-    }
-
-    # Make lower and apply all replacements in a single loop
+    # Replace characters using mapping
+    replacements = {'_': '-', '.': '-', ' ': '-'}
     for old, new in replacements.items():
         name_part = name_part.lower().replace(old, new)
 
-    # Remove all characters except a-z, 0-9, and hyphens
+    # Remove non-alphanumeric (except hyphens)
     name_part = re.sub(r'[^a-z0-9\-]', '', name_part)
 
-    # Remove any trailing hyphens
+    # Strip trailing hyphens
     name_part = name_part.rstrip('-')
 
-    return name_part + ext  # Keep extension as-is for now
+    return name_part + ext
 
 def list_rename_and_cleanup(base_path, dry_run=False):
     renamed_items = []
     deleted_files = []
 
-    # Extensions to delete (lowercase), including .jpg
+    # Extensions to delete
     delete_exts = {'.txt', '.nfo', '.png', '.jpeg', '.jpg'}
 
     for root, dirs, files in os.walk(base_path, topdown=False):
-        # Handle files
         for filename in files:
             ext = os.path.splitext(filename)[1].lower()
             file_path = os.path.join(root, filename)
@@ -57,7 +47,6 @@ def list_rename_and_cleanup(base_path, dry_run=False):
                     if not dry_run:
                         os.rename(file_path, new_path)
 
-        # Handle directories
         for dirname in dirs:
             original_path = os.path.join(root, dirname)
             new_name = clean_name(dirname)
@@ -68,6 +57,25 @@ def list_rename_and_cleanup(base_path, dry_run=False):
                     os.rename(original_path, new_path)
 
     return renamed_items, deleted_files
+
+def is_rar_file(file_path):
+    try:
+        with open(file_path, 'rb') as f:
+            header = f.read(8)
+            return header.startswith(b'Rar!\x1a\x07')
+    except Exception:
+        return False
+
+def remove_rar_files(base_path, dry_run=False):
+    deleted_rar_files = []
+    for root, dirs, files in os.walk(base_path):
+        for filename in files:
+            file_path = os.path.join(root, filename)
+            if is_rar_file(file_path):
+                deleted_rar_files.append(file_path)
+                if not dry_run:
+                    os.remove(file_path)
+    return deleted_rar_files
 
 if __name__ == "__main__":
     directory_path = input("Enter the full path to the directory you want to process: ").strip()
@@ -95,3 +103,14 @@ if __name__ == "__main__":
                 print(file)
         else:
             print("\nNo .txt, .nfo, .png, .jpeg, or .jpg files found to delete.")
+
+        # Prompt to remove RAR files
+        delete_rar_input = input("\nWould you like to remove any RAR archive files? (y/n): ").strip().lower()
+        if delete_rar_input == 'y':
+            rar_deleted = remove_rar_files(directory_path, dry_run)
+            if rar_deleted:
+                print("\nRAR archive files to be removed:" if dry_run else "\nRemoved RAR archive files:")
+                for file in rar_deleted:
+                    print(file)
+            else:
+                print("\nNo RAR archive files found to remove.")
