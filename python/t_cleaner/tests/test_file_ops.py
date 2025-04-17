@@ -1,6 +1,7 @@
 import unittest
 import os
 import tempfile
+from pathlib import Path
 from file_ops import list_rename_and_cleanup, is_rar_file, remove_rar_files
 
 
@@ -36,8 +37,19 @@ class TestFileOps(unittest.TestCase):
         renamed_files = [os.path.basename(a) for _, a in renamed]
         self.assertIn("movie.mkv", renamed_files)
 
-    def test_is_rar_file(self):
-        self.assertTrue(is_rar_file(self.rar_file_path))
+    def test_is_rar_file_true(self):
+        with tempfile.NamedTemporaryFile(delete=False) as tf:
+            tf.write(b"Rar!\x1a\x07\x00" + b"rest of file")
+            tf_path = Path(tf.name)
+        self.assertTrue(is_rar_file(tf_path))
+        tf_path.unlink()
+
+    def test_is_rar_file_false(self):
+        with tempfile.NamedTemporaryFile(delete=False) as tf:
+            tf.write(b"not a rar file")
+            tf_path = Path(tf.name)
+        self.assertFalse(is_rar_file(tf_path))
+        tf_path.unlink()
 
     def test_remove_rar_files(self):
         removed = remove_rar_files(self.base_path, dry_run=False)
