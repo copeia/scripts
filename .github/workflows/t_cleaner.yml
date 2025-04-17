@@ -31,8 +31,9 @@ jobs:
 
     - name: Run tests with coverage
       run: |
-        coverage run -m unittest discover -s python/t_cleaner/tests
+        coverage run -m unittest discover -s tests
         coverage report
+        coverage xml
       working-directory: python/t_cleaner
 
     - name: Upload to Codecov
