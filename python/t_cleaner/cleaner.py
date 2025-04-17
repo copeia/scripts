@@ -2,7 +2,21 @@ import os
 import re
 
 # Optional: define a set of known/allowed extensions
-KNOWN_EXTENSIONS = {".jpg", ".jpeg", ".png", ".mkv", ".mp4", ".avi", ".mov", ".srt", ".rar", ".txt", ".nfo"}
+KNOWN_EXTENSIONS = {
+    ".jpg",
+    ".jpeg",
+    ".png",
+    ".mkv",
+    ".mp4",
+    ".avi",
+    ".mov",
+    ".srt",
+    ".rar",
+    ".txt",
+    ".nfo",
+    ".zip",
+}
+
 
 def clean_name(name: str, is_dir: bool = False) -> str:
     original_name = name
