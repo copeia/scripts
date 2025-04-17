@@ -23,6 +23,10 @@ class TestCleaner(unittest.TestCase):
     def test_trailing_hyphen_removed(self):
         self.assertEqual(clean_name("something.... "), "something")
 
+    def test_full_cleanup(self):
+        self.assertEqual(clean_name("Some File Name-1990.$2@_-.mp4"), "some-file-name-1990-2.mp4")
+        self.assertEqual(clean_name("Some File Name-1990.$2._.mp4"), "some-file-name-1990-2.mp4")
+
 
 if __name__ == "__main__":
     unittest.main()
